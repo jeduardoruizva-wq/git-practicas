@@ -1,0 +1,12 @@
+name: Stats
+on: 
+  push:
+    branches: [main]
+
+jobs: 
+  build: 
+    runs-on: ubuntu-latest
+    steps: 
+       - name: checkout repo
+         uses: actions/checkout@v44
+    
