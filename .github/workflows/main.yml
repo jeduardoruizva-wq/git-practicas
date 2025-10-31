@@ -9,22 +9,37 @@ jobs:
     steps: 
        - name: checkout repo
          uses: actions/checkout@v4
-       - id: auth
-         uses: google-github-actions/auth@v0.4.0
+       - name: Set up Google Cloud
+         uses: google-github-actions/setup-gcloud@v2
          with:
-          token_format: "access_token"
-          create_credentials_file: true
-          activate_credentials_file: true
-          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_POOL_ID }}
-          service_account: ${{ secrets.SERVICE_ACCOUNT }}
-       - name: Set up Cloud SDK
-         uses: google-github-actions/setup-gcloud@v0.3.0
-       - name: Create API bundle
-         run: zip -r proxy.zip apiproxy
-       - name: Upload API Proxy Bundle
-         id: upload
-         run: "echo \"::set-output name=apigee-revision::$(curl --fail -X POST -H \"Content-Type: multipart/form-data\" -H \"Authorization: Bearer ${{steps.auth.outputs.access_token}}\" -F \"file=@proxy.zip\" \"https://apigee.googleapis.com/v1/organizations/${{secrets.APIGEE_ORG}}/apis?action=import&name=hello-world\" --silent | jq --raw-output .revision)\""
-       - name: Deploy Revision
-         run: "curl --fail -X POST -H \"Authorization: Bearer ${{steps.auth.outputs.access_token}}\" \"https://apigee.googleapis.com/v1/organizations/${{ secrets.APIGEE_ORG }}/environments/eval/apis/hello-world/revisions/${{steps.upload.outputs.apigee-revision}}/deployments?override=true\""
- 
-    
+            project_id: ${{ secrets.GCP_PROJECT }}
+            service_account_key: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
+       - name: Install Apigee CLI
+         run: |
+            curl -L https://github.com/apigee/apigeecli/releases/latest/download/apigeecli_Linux_x86_64.tar.gz | tar xz
+            sudo mv apigeecli /usr/local/bin/
+       - name: Create proxy bundle
+         env:
+          APIGEE_ORG: ${{ secrets.APIGEE_ORG }}
+         run: |
+          apigeecli apis create bundle \
+            --name ${{ secrets.PROXY_NAME }} \
+            --bundle ./apiproxy \
+            --org $APIGEE_ORG || echo "Bundle may already exist"
+       - name: Get latest revision
+         id: revision
+         env:
+          APIGEE_ORG: ${{ secrets.APIGEE_ORG }}
+         run: |
+          REV=$(apigeecli apis list --org $APIGEE_ORG --name ${{ secrets.PROXY_NAME }} --json | jq -r '.[0].revision')
+          echo "revision=$REV" >> $GITHUB_OUTPUT
+       - name: Deploy to Apigee environment
+         env:
+          APIGEE_ORG: ${{ secrets.APIGEE_ORG }}
+          APIGEE_ENV: ${{ secrets.APIGEE_ENV }}
+         run: |
+          apigeecli apis deploy \
+            --name ${{ secrets.PROXY_NAME }} \
+            --rev ${{ steps.revision.outputs.revision }} \
+            --env $APIGEE_ENV \
+            --org $APIGEE_ORG
