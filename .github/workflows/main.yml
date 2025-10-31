@@ -9,11 +9,6 @@ jobs:
     steps: 
        - name: checkout repo
          uses: actions/checkout@v4
-       - name: Set up Google Cloud
-         uses: google-github-actions/setup-gcloud@v2
-         with:
-            project_id: ${{ secrets.GCP_PROJECT }}
-            service_account_key: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
         # 2️⃣ Autenticar con Service Account
        - name: Authenticate to Google Cloud
          uses: google-github-actions/auth@v1
