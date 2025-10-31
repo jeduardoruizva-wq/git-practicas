@@ -35,8 +35,9 @@ jobs:
         # 4️⃣ Desplegar proxy a Apigee
        - name: Deploy Apigee Proxy
          run: |
-          gcloud apigee apis update-proxy \
+          gcloud beta apigee apis deploy \
           --organization=${{ secrets.APIGEE_ORG }} \
           --environment=${{ secrets.APIGEE_ENV }} \
           --api=${{ secrets.PROXY_NAME }} \
-          --source=proxy.zip
+          --bundle=proxy.zip \
+          --override
