@@ -16,8 +16,8 @@ jobs:
             service_account_key: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
        - name: Install Apigee CLI
          run: |
-            curl -L https://github.com/apigee/apigeecli/releases/latest/download/apigeecli_Linux_x86_64.tar.gz | tar xz
-            sudo mv apigeecli /usr/local/bin/
+          curl -L https://github.com/apigee/apigeecli/releases/latest/download/apigeecli_Linux_x86_64.tar.gz -o apigeecli.tar.gz tar -xzf apigeecli.tar.gz chmod +x apigeecli sudo mv apigeecli /usr/local/bin/
+
        - name: Create proxy bundle
          env:
           APIGEE_ORG: ${{ secrets.APIGEE_ORG }}
