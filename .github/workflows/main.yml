@@ -32,29 +32,12 @@ jobs:
           else
           echo "API already exists."
           fi
-        # 4️⃣ Desplegar proxy a Apigee
-       - name: Import Apigee Proxy
-         run: |
-          gcloud beta apigee apis import \
-          --organization=${{ secrets.APIGEE_ORG }} \
-          --api=${{ secrets.PROXY_NAME }} \
-          --bundle=proxy.zip
-
-# Get the latest revision number
-       - name: Get Latest Revision
-         id: get_revision
-         run: |
-          REV=$(gcloud beta apigee apis revisions list ${{ secrets.PROXY_NAME }} \
-          --organization=${{ secrets.APIGEE_ORG }} \
-          --format="value(revision)" | sort -nr | head -n1)
-          echo "REVISION=$REV" >> $GITHUB_ENV
-
-       - name: Deploy Apigee Proxy
-         run: |
-          gcloud beta.apigee apis deploy \
-          --organization=${{ secrets.APIGEE_ORG }} \
-          --environment=${{ secrets.APIGEE_ENV }} \
-          --api=${{ secrets.PROXY_NAME }} \
-          --revision=$REVISION \
-          --override
+          - name: Deploy Apigee Proxy
+           run: |
+            gcloud beta apigee apis deploy \
+            --organization=${{ secrets.APIGEE_ORG }} \
+            --environment=${{ secrets.APIGEE_ENV }} \
+            --api=${{ secrets.PROXY_NAME }} \
+            --bundle=proxy.zip \
+            --override
 
