@@ -17,6 +17,9 @@ jobs:
         # 3️⃣ Configurar proyecto de GCP
        - name: Set GCP Project
          run: gcloud config set project ${{ secrets.GCP_PROJECT }}
+       - name: Zip Apigee Proxy
+         run: |
+          zip -r proxy.zip apiproxy
         # 4️⃣ Desplegar proxy a Apigee
        - name: Deploy Apigee Proxy
          run: |
