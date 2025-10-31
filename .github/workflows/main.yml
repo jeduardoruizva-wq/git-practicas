@@ -14,32 +14,20 @@ jobs:
          with:
             project_id: ${{ secrets.GCP_PROJECT }}
             service_account_key: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
-       - name: Install Apigee CLI
+        # 2️⃣ Autenticar con Service Account
+       - name: Authenticate to Google Cloud
+         uses: google-github-actions/auth@v1
+         with:
+           credentials_json: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
+        # 3️⃣ Configurar proyecto de GCP
+       - name: Set GCP Project
+         run: gcloud config set project ${{ secrets.GCP_PROJECT }}
+        # 4️⃣ Desplegar proxy a Apigee
+       - name: Deploy Apigee Proxy
          run: |
-          curl -L https://github.com/apigee/apigeecli/releases/latest/download/apigeecli_Linux_x86_64.tar.gz -o apigeecli.tar.gz tar -xzf apigeecli.tar.gz chmod +x apigeecli sudo mv apigeecli /usr/local/bin/
-
-       - name: Create proxy bundle
-         env:
-          APIGEE_ORG: ${{ secrets.APIGEE_ORG }}
-         run: |
-          apigeecli apis create bundle \
-            --name ${{ secrets.PROXY_NAME }} \
-            --bundle ./apiproxy \
-            --org $APIGEE_ORG || echo "Bundle may already exist"
-       - name: Get latest revision
-         id: revision
-         env:
-          APIGEE_ORG: ${{ secrets.APIGEE_ORG }}
-         run: |
-          REV=$(apigeecli apis list --org $APIGEE_ORG --name ${{ secrets.PROXY_NAME }} --json | jq -r '.[0].revision')
-          echo "revision=$REV" >> $GITHUB_OUTPUT
-       - name: Deploy to Apigee environment
-         env:
-          APIGEE_ORG: ${{ secrets.APIGEE_ORG }}
-          APIGEE_ENV: ${{ secrets.APIGEE_ENV }}
-         run: |
-          apigeecli apis deploy \
-            --name ${{ secrets.PROXY_NAME }} \
-            --rev ${{ steps.revision.outputs.revision }} \
-            --env $APIGEE_ENV \
-            --org $APIGEE_ORG
+          gcloud apigee apis deploy \
+          --organization=${{ secrets.APIGEE_ORG }} \
+          --environment=${{ secrets.APIGEE_ENV }} \
+          --api=${{ secrets.PROXY_NAME }} \
+          --version=1 \
+          --bundle=proxy.zip
