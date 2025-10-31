@@ -20,20 +20,8 @@ jobs:
        - name: Zip Apigee Proxy
          run: |
           zip -r proxy.zip apiproxy
-       - name: Create Apigee API if not exists
-         id: create_api
+       - name: Deploy Apigee Proxy
          run: |
-          if ! gcloud apigee apis list --organization=${{ secrets.APIGEE_ORG }} | grep -q ${{ secrets.PROXY_NAME }}; then
-          echo "API does not exist, creating..."
-          gcloud beta apigee apis create \
-            --organization=${{ secrets.APIGEE_ORG }} \
-            --api=${{ secrets.PROXY_NAME }} \
-            --bundle=proxy.zip
-          else
-          echo "API already exists."
-          fi
-          - name: Deploy Apigee Proxy
-           run: |
             gcloud beta apigee apis deploy \
             --organization=${{ secrets.APIGEE_ORG }} \
             --environment=${{ secrets.APIGEE_ENV }} \
